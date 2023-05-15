@@ -37,8 +37,7 @@ days_in_months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 CAPITAL_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 s = HTMLSession()
-starting_point_link = "https://www.supercasas.com/buscar/?do=1&ObjectType=123&PriceType=401&PriceFrom=0.00&PriceTo=200000.00&PagingPageSkip="
-####starting_point_link = "https://www.supercasas.com/buscar/?do=1&PriceType=401&PriceFrom=0&PriceTo=200000&PagingPageSkip="
+starting_point_link = "https://www.supercasas.com/buscar/?do=1&PriceType=401&PriceFrom=0&PriceTo=200000&PagingPageSkip="
 #COROTOS CRAWLER
 #parsing functions
 link_1 = "https://www.supercasas.com/apartamentos-alquiler-piantini/1295764/"#good to crawl
@@ -151,7 +150,7 @@ def get_csv_to_array_amenities():
 
 def get_post_info(link):
     try:
-        save_to_csv_file([link], "crawled_links_supercasas.csv")
+        #save_to_csv_file([link], "crawled_links_supercasas.csv")
         #user_agent = manage_server_block.get_user_agent()
         req = requests.get(link, headers={'User-Agent': 'Mozilla/5.0'})# 'Mozilla/5.0'
         soup = BeautifulSoup(req.content, 'html.parser')
@@ -178,6 +177,7 @@ def get_post_info(link):
         price_crawled_parent  = soup.find("div", {"class": "detail-ad-info-specs-block main-info"})
         price_crawled_narrow = [item for item in price_crawled_parent.find_all("div")]
         price_crawled_tag = str(price_crawled_narrow.pop())
+        print(price_crawled_tag)
         price = 0    
         if("Alquiler" in price_crawled_tag):
             price_crawled_string = price_crawled_tag[price_crawled_tag.index("</span>") + 7:price_crawled_tag.index("</div>")]
@@ -212,6 +212,7 @@ def get_post_info(link):
         details_array = ["supercasas",link,price_crawled,price,post_title,rooms,
         bathrooms,location,sector,province,condition,current_use,square_footage,floor,
         elevator,buildable,construction_year,amenities,amount_amenities, image_link]
+        print(details_array)
         save_to_csv_file(details_array, "my_database_SUPERCASAS.csv")
 
         details = {
@@ -237,9 +238,10 @@ def get_post_info(link):
             "image_link": image_link
         }
         #info.insert_many(details)
-        save_to_csv_file([link], "saved_posts_supercasas.csv")        
+        #save_to_csv_file([link], "saved_posts_supercasas.csv")        
     except:
-        save_to_csv_file([link], "error_supercasas.csv") 
+        return
+        #save_to_csv_file([link], "error_supercasas.csv") 
 
 def get_posts_on_queue(link):
     global on_queue
@@ -278,12 +280,15 @@ def save_posts():
         time.sleep(10 * 60)
 
 if __name__ == '__main__':
-    while(pagination_exits):
-        l = get_txt_file('last_pagination_supercasas.txt')
-        get_posts_on_queue(starting_point_link + str(int(l[0])))
-        set_txt_file('last_pagination_supercasas.txt', str(int(l[0]) + 1))
-        save_posts()
-        on_queue = []
+    #get_post_info("https://www.supercasas.com/apartamentos-venta-y-alquiler-urbanizacion-fernandez/1296652/")
+    new = ['supercasas', 'https://www.supercasas.com/apartamentos-venta-y-alquiler-urbanizacion-fernandez/1296652/', 'US$ 1,600/Mes', 90804.96, 'Urbanización Fernández ', 3.0, 2.5, 'Urbanización Fernández , Santo Domingo Centro (D.N.), Santo Domingo', 'Santo Domingo Centro (D.N.)', 'Santo Domingo', 'Segundo Uso', 'Residencial', '147', '2', '1', 'No', '2019', '1/2 Baño-Agua Potable-Ascensor-Balcón-Cisterna-Control de Acceso-Cuarto de Servicio-Gimnasio-Lobby-Piscina-Planta Eléctrica-Seguridad 24 Horas-Terraza-Walk In Closet', 14, 'https://img.supercasas.com/AdsPhotos/800x600/0/8974552.jpg']
+    save_to_csv_file(new, "my_database_SUPERCASAS.csv")
+    #while(pagination_exits):
+    #    l = get_txt_file('last_pagination_supercasas.txt')
+    #    get_posts_on_queue(starting_point_link + str(int(l[0])))
+    #    set_txt_file('last_pagination_supercasas.txt', str(int(l[0]) + 1))
+    #    save_posts()
+    #    on_queue = []
     #save_posts()
     #l = "https://www.supercasas.com/buscar/?do=1&PriceType=401&PriceFrom=0&PriceTo=200000&PagingPageSkip=18"
     #next_in_pagintation(l)

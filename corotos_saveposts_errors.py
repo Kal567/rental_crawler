@@ -3,8 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 import urljoin
 from  requests_html import HTMLSession
-import pymongo
 import csv
+
 
 #MONGO_URI = 'mongodb://localhost:27017'
 #client = MongoClient(MONGO_URI)
@@ -14,6 +14,33 @@ import csv
 #client=pymongo.MongoClient('mongodb://127.0.0.1:27017/')
 #mydb=client['inmuebles_db']
 #info = mydb.table1
+
+ALL_AMENITIES = ['Agua Potable', 'Área de Juegos Infantiles', 'Area de Juegos Infantiles', 'Área de Juego Infantil',
+                 'Area de Juego Infantil', 'Ascensor', 'Balcon', 'Balcón', 'Cisterna', 'Control de Acceso', 'Gimnasio',
+                 'Lobby', 'Piscina', 'Planta Electrica', 'Pozo', 'Seguridad 24 Horas', 'Seguridad Privada', 'Terraza',
+                 'Walk In Closet', '1/2 Baño', '1/2 Bano', 'Área Servicio Independiente', 'Area Servicio Independiente',
+                 'Cuarto de Servicio', 'Inversor', 'Jacuzzi', 'Estar Familiar', 'Aire Acondicionado', 'Gazebo', 'Estudio',
+                 'Patio', 'Vestidores', 'Vestidor', 'Family Room', 'Picuzzi', 'Satelite', 'Sauna', 'Shutters', 'Walk In Closet',
+                 'Roof garden', 'Salon de usos múltiples', 'Salon de usos multiples', 'Salon multiuso', 'Almacenamiento', 
+                 'Ludoteca', 'Seguridad', 'Estacionamiento', 'Parqueo', 'Bodega', 'Elevador', 'Ascensor', 'Salón de eventos',
+                 'Salon de evento', 'Alberca', 'Pistas de ciclismo', 'Espacio de ciclismo', 'Pista para correr',
+                 'Espacio para correr', 'Pista para caminar', 'Espacio para caminar','Cancha','Business Center',
+                 'Instalaciones para mascotas','Guardería para perros','Guarderia para perros','Guarderia para perro',
+                 'Bar','Spa','Sky Lounge','Lounge','Salón de belleza','Salon de belleza','Area para fogata','Jardines',
+                 'Jardín','Jardin','Cuarto de Servicio','Ventanas Grandes','Áreas verdes','Areas Verdes','Casa Club',
+                 'Área de asado','Area de asado','BBQ','Área infantil','Area infantil','Sala de cine','Cine','Espacio coworking',
+                 'Area de lavado','Área de recepción','Area de recepción','Servicio de recepcionista','Recepcionista',
+                 'Wifi','Lavadora','Secadora','Calefacción','Calefaccion','Área para trabajar con laptop',
+                 'Area para trabajar con laptop','Mascotas','Detector de humo','Detector de monóxido de carbono',
+                 'Detector de monoxido de carbono','Extintor','Botiquín de primeros auxilios','Botiquin de primeros auxilios',
+                 'Números locales de emergencia','Numeros locales de emergencia','Plan y números locales de emergencia',
+                 'Plan y numeros locales de emergencia','Plan de emergencia','Cocinas totalmente equipadas','Cocinas equipadas',
+                 'Tina','Buena iluminación','Buena iluminacion','Amueblado','Línea blanca','Linea blanca','Zona de trabajo',
+                 'Salón social','Salon social','Área residencial','Area residencial','Residencial','Cámaras de seguridad',
+                 'Camaras de seguridad','Yoga y meditación','Yoga','Meditación','Meditacion','Cerca de parque','Rooftop Deck',
+                 'Zona de Calisteria','Conserjeria','Servicio de Conserjería','Servicio de Conserjeria','Lavandería Comunitaria',
+                 'Lavanderia Comunitaria','Parqueo de Visitantes','Estacionamiento de Visitantes','App Comunitario',
+                 'Apps Comunitario','Apps Comunitaria','Gas Central','Acceso a la playa']
 
 USD_to_DOP_EXCHANGE_RATE = 56.7531
 months = {
@@ -113,8 +140,6 @@ def split_by_line_jump(array):
 
 #===========================================================================================================================
 
-
-#COROTOS CRAWLER
 #parsing functions
 link_id = 0
 time_wait = 10
@@ -124,7 +149,7 @@ link_3 = "https://www.corotos.com.do/listings/apartamento-con-piscina-perfecto-p
 
 def get_post_info(link):
     try:
-        save_to_csv_file([link], "crawled_links.csv")
+        #save_to_csv_file([link], "crawled_links_corotos.csv")
         #user_agent = manage_server_block.get_user_agent()
         req = requests.get(link, headers={'User-Agent': 'Mozilla/5.0'})# 'Mozilla/5.0'
         soup = BeautifulSoup(req.content, 'html.parser')
@@ -142,6 +167,7 @@ def get_post_info(link):
         title = title_str.string
         specs_items_array = []
         post_description = soup.find("div", {"class": "post__description"})
+        
         specs = post_description.find("ul", {"class": "post__specs"})
         specs_items_array = [item.text for item in specs.find_all("li", {"class": "specs__item"})]
         amenities_description = [item.text for item in post_description.find_all("p")]
@@ -152,51 +178,33 @@ def get_post_info(link):
         sector, province = location_to_sector_and_province(end_location)
         type_amenity, rooms, bathrooms, square_footage, half_bathrooms, sector_specs, other_specs = get_details(specs_items_array)
         amenities = get_amenities(amenities_description)
-        
-        r = s.get(link)
-        r.html.render(sleep=1)
-        images = r.html.find('img')
+        #image_slider = post_description.find("div", {"class": "flickity-slider"})
+        #print(image_slider)
+        #first_image_in_slider = image_slider.find("div", {"class": "carousel-cell is-selected"})
+        #print(first_image_in_slider)
+        #image_link = first_image_in_slider.find("img", class_ = "pageloaded")['src']
+        #print(image_link)
+        #r = s.get(link)
+        #r.html.render(sleep=1)
+        #images = r.html.find('img')
         image_link = ""
-        for image in images:
-            if "/img.corotos.com.do/" in str(image):
-                if("/img.corotos.com.do/variants/" in str(image.attrs['src'])):
-                    image_link = str(image.attrs['src'])
-                    break
-
+        #for image in images:
+        #    if "/img.corotos.com.do/" in str(image):
+        #        if("/img.corotos.com.do/variants/" in str(image.attrs['src'])):
+        #            image_link = str(image.attrs['src'])
+        #            break
+        
         details_array = ["corotos",link,price,converted_price_dop,date,day,
         month,title,end_location,sector,province,type_amenity,rooms,bathrooms,
         other_specs,square_footage,half_bathrooms,sector_specs,amenities,0, image_link]
         save_to_csv_file(details_array, "my_database_COROTOS.csv")
-
-        details = {
-            "website": "corotos",
-            "link" : link, 
-            "price_crawled": price, 
-            "price_DOP": converted_price_dop,
-            "date_crawled": date, 
-            "day_upload": day,
-            "month_upload": month, 
-            "year_upload": year,
-            "title": title, 
-            "location_crawled": end_location,
-            "sector_from_location": sector,
-            "province": province,
-            "tipo": type_amenity, 
-            "rooms": rooms, 
-            "bathrooms": bathrooms, 
-            "other_specs": other_specs,
-            "square_footage": square_footage, 
-            "half_bathrooms": half_bathrooms, 
-            "sector_from_specs": sector_specs,
-            "amenities_description": amenities,
-            "amount_amenities": 0,
-            "image_link": image_link
-        }
+        print(details_array)
 
         #info.insert_many(details)
-        save_to_csv_file([link], "saved_posts_corotos.csv")        
+        #save_to_csv_file([link], "saved_posts_corotos.csv")        
     except:
-        save_to_csv_file([link], "error_corotos.csv")  
+        return
+        #save_to_csv_file([link], "error_corotos.csv")  
 
 
 def next_in_pagination(link):
@@ -223,7 +231,7 @@ def get_posts_on_queue(link):
     listings = r.html.xpath('//*[@class="page_content"]', first=True)
     for post in listings.links:
         if str(post) not in on_queue and post not in crawled and "/listings/" in str(post):
-            save_to_csv_file([str(post)], "on_queue_mercadolibre.csv") 
+            save_to_csv_file([str(post)], "on_queue_corotos.csv") 
             on_queue.append(str(post))    
 
 def populate_on_queue(current_in_pagination_link):
@@ -252,13 +260,39 @@ def save_posts():
         #crawled.append(link) 
         time.sleep(time_wait * 60)
 
+def get_first_line_csv_on_queue(file):
+    with open(file, newline='') as f:
+        reader = csv.reader(f)
+        return next(reader)[0]
+
+def remove_first_csv_line(file):
+    try:
+        with open(file, 'r+') as fp:
+                lines = fp.readlines()
+                if len(lines) > 0:
+                    fp.seek(0)
+                    fp.truncate()
+                    fp.writelines(lines[1:])                    
+    except:
+        return 
+
+def get_saveposts_errors():
+    current_link = get_first_line_csv_on_queue("error_corotos.csv")
+    if(current_link is not None):
+        remove_first_csv_line("error_corotos.csv")
+        get_post_info(current_link)
 
 if __name__ == '__main__':
-    l = get_txt_file('last_pagination_corotos.txt')
-    get_posts_on_queue(starting_point_link + str(int(l[0])))
-    set_txt_file('last_pagination_corotos.txt', str(int(l[0]) + 1))
-    populate_on_queue(starting_point_link)
-    save_posts()
+    new = ['corotos', 'https://www.corotos.com.do/listings/rentamos-y-o-vendemos-por-ti-tu-apartamento-casa-aparta-estudio-solar-fjsy16z?q%5Bpublished_at_lteq%5D=2023-03-16T11%3A53%3A58Z&q%5Bsorts%5D=score_letter+asc%2Cpublished_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=22&count=212&render_time=2023-03-16T11%3A53%3A58Z', 35000, 1986358.5000000002, 'Publicado: 14 de enero de 2023', 14, 1, 'Rentamos y/o vendemos por ti tu Apartamento, casa, aparta-estudio, solar.\n', 'Distrito Nacional, Santo Domingo', 'Distrito Nacional', 'Santo Domingo', 'Sin Amueblar', '2', '2', '', '200', '---', 'Bella Vista', '3. Habitación terciaria (abierta)-4. (2) baños.-5. Comedor (por separado)-1. Habitación principal con baño y walking closet.-7. Área de lavado.-3. Cocina espaciosa.-Descripción de este apartamento:-Si no quieres lidiar con el proceso de alquiler o venta de tu inmueble nosotros nos encargamos de todo el proceso de muestra, negociación, financiero y legal.-Apartamento con decoración en paredes en madera pulida y bien acabada, es un apartamento bastante espacioso para disfrutar el estadía y comodidad en familia sin necesidad de salir-2. Habitación secundaria con closet espacioso.-4. Sala.-6. Balcón espacioso-Para más información ponte en contacto.', 0, '']
+    save_to_csv_file(new, "my_database_COROTOS.csv")
+    #time.sleep(3 * 60)
+    #get_post_info("https://www.corotos.com.do/listings/rentamos-y-o-vendemos-por-ti-tu-apartamento-casa-aparta-estudio-solar-fjsy16z?q%5Bpublished_at_lteq%5D=2023-03-16T11%3A53%3A58Z&q%5Bsorts%5D=score_letter+asc%2Cpublished_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=22&count=212&render_time=2023-03-16T11%3A53%3A58Z")
+
+    #l = get_txt_file('last_pagination_corotos.txt')
+    #get_posts_on_queue(starting_point_link + str(int(l[0])))
+    #set_txt_file('last_pagination_corotos.txt', str(int(l[0]) + 1))
+    #populate_on_queue(starting_point_link)
+    #save_posts()
 
 #l_41 = ['https://www.corotos.com.do/listings/se-renta-apartamento-nuevo-en-sarmiento-2nm0x5a?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=3&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/apartamento-95-m2-en-renta-amueblado-2-habitaciones-santiago-01gaw4dpfjx4hhb4s2bg1k7wp8', 'https://www.corotos.com.do/listings/vendo-apartamento-97-39mts-gazcue-01ghvna2vdrped5txze53c0369', 'https://www.corotos.com.do/listings/renta-de-apartamento-ubicado-en-san-isidro-labrador-464gp87?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=9&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/rento-apartamento-ubicado-en-colinas-de-los-rios-yxdwa4w?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=11&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/apartamento-en-renta-en-naco-vq1tkv1?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=15&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/apartamento-en-renta-115-m2-3-habitaciones-2-parqueos-ascensor-area-social-espxj9j?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=27&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/rento-apartamento-totalmente-amueblado-y-equipado-4z4qm4g?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=31&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/rento-apartamento-vacacional-en-cocotal-punta-cana-dia-semana-mes-hwewyj1?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=29&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/rento-apartamento-en-naco-sin-amueblar-01gkyv65n86dexqyphd5n5exyk', 'https://www.corotos.com.do/listings/sin-intermediario-rento-apartamento-amueblado-full-1-habitacion-1e3xp9a?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=21&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/apartamentos-en-renta-hfm0vrb?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=30&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/sin-intermediario-rento-apartamento-amueblado-full-2-hb-wn16219?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=33&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/apartamento-amueblado-frente-al-ole-de-la-jacobo-renta-corta-k5azqq2?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=18&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/apartamento-disponible-para-la-renta-rcfzmdf?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=5&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/sin-intermediarios-rento-apartamento-piantini-rkjnr0h?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=28&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/rento-apartamentos-nuevos-en-ciudad-satelite-ykhff6z?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=8&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/rento-apartamento-amueblado-en-evaristo-morales-01ghpc220220w7d6651pt9ytp0', 'https://www.corotos.com.do/listings/sin-intermediarios-rento-apartamento-en-naco-amplio-6m2ye8c?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=24&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/sin-intermediario-rento-apartamento-amueblado-full-1-habitacion-xc8kxj6?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=32&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/for-rent-bellisimo-y-moderno-apartamento-ejecutivo-con-alto-nivel-de-calidad-vv7wjce?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=14&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/sin-intermediarios-rento-apartamento-piantini-07kdtdc?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=23&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/sin-intermediarios-rento-apartamento-torre-moderna-100-mts2-291zm7t?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=20&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/rento-apartamento-1-habitacion-a-estrenar-en-el-millon-prox-a-gustavo-m-ricart-6pkdnps?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=19&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/rento-apartamento-ubicado-en-colinas-de-los-rios-yrfzqdq?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=12&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/rento-apartamento-en-naco-con-dos-parqueos-dos-habitaciones-01gkbwda5nes16qhx13s0fen7y', 'https://www.corotos.com.do/listings/sin-intermediarios-rento-apartamento-en-naco-cuarto-de-servicio-znwyjq9?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=22&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/rento-apartamento-en-el-paraiso-wgpsrwm?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=13&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/for-rent-bellisimo-y-moderno-apartamento-ejecutivo-con-alto-nivel-de-calidad-v83mvg8?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=16&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/apartamento-en-renta-evaristo-morales-145-mts-cuadrados-mj207e4?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=26&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/se-renta-apartamento-amueblado-kmarf3d?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=34&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/renta-apartamento-amueblado-en-santiago-rd-4j5ny21?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=36&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/rento-apartamentos-nuevos-en-ciudad-satelite-2s7v44y?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=1&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/rento-hermoso-apartamento-nuevo-a-estrenar-bien-iluminado-ventilado-moderno-d1gjq8b?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=35&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/hermoso-apartamento-renta-vacacional-49d53x3?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=6&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/renta-de-apartamento-sy5qjmr?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=4&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/se-renta-apartamento-amueblado-res-alejo-v-yn2g96f?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=7&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/apartamento-en-venta-y-renta-en-serralles-pxfxd90?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=17&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/for-rent-hermoso-y-fresco-apartamento-piso-alto-ubicado-en-bella-vista-0e40bra?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=10&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/apartamento-disponible-para-rentar-11-800-mensual-yw3jg5v?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=2&count=190&render_time=2023-02-05T23%3A33%3A32Z', 'https://www.corotos.com.do/listings/rento-apartamentos-en-riveras-de-haina-bayona-rd-14-000-y-15-000-pesos-44jpy95?q%5Bpublished_at_lteq%5D=2023-02-05T23%3A33%3A32Z&q%5Bsorts%5D=published_at+desc&search=renta+de+apartamentos&page=1&per_page=36&details_page=25&count=190&render_time=2023-02-05T23%3A33%3A32Z']
     

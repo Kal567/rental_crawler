@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 from  requests_html import HTMLSession
 import pymongo
-#import manage_server_block
 import csv
 
 on_queue = []
@@ -37,19 +36,15 @@ days_in_months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 CAPITAL_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 s = HTMLSession()
-starting_point_link = "https://www.supercasas.com/buscar/?do=1&ObjectType=123&PriceType=401&PriceFrom=0.00&PriceTo=200000.00&PagingPageSkip="
-####starting_point_link = "https://www.supercasas.com/buscar/?do=1&PriceType=401&PriceFrom=0&PriceTo=200000&PagingPageSkip="
-#COROTOS CRAWLER
+starting_point_link = "https://www.supercasas.com/buscar/?do=1&PriceType=401&PriceFrom=0&PriceTo=200000&PagingPageSkip="
 #parsing functions
 link_1 = "https://www.supercasas.com/apartamentos-alquiler-piantini/1295764/"#good to crawl
 link_2 = "https://www.supercasas.com/villas-alquiler-metro-country-club/1299217/"#good to crawl
-link_3 = "https://www.supercasas.com/villas-alquiler-casa-de-campo/1263608/" #not to be save to bd, price by day, not month
+link_3 = "https://www.supercasas.com/villas-alquiler-casa-de-campo/1263608/" #not to be saved to bd, price by day, not month
 
 AMENITIES_FILE = "amenities.csv"
 
-
 #===========================================================================================================================
-
 def convert_dollar_to_dominican_peso_supercasas(price_str):
     price = price_str[price_str.index("$") + 1:price_str.index("/")]
     converted_amount = 0
@@ -254,6 +249,7 @@ def get_posts_on_queue(link):
     listings = r.html.xpath('//*[@id="bigsearch-results-inner-container"]', first=True)
     for post in listings.links:
         if str(post) not in on_queue and post not in crawled and "/buscar/" not in str(post) and "locales" not in str(post):
+            save_to_csv_file([str(post)], "on_queue_supercasas.csv") 
             on_queue.append("https://www.supercasas.com" + str(post))    
     save_to_csv_file(on_queue, "crawled_links_supercasas.csv")
 
@@ -277,13 +273,52 @@ def save_posts():
         get_post_info(link)
         time.sleep(10 * 60)
 
+def get_first_line_csv_on_queue(file):
+    with open(file, newline='') as f:
+        reader = csv.reader(f)
+        return next(reader)[0]
+
+def remove_first_csv_line(file):
+    try:
+        with open(file, 'r+') as fp:
+                lines = fp.readlines()
+                if len(lines) > 0:
+                    fp.seek(0)
+                    fp.truncate()
+                    fp.writelines(lines[1:])                    
+    except:
+        return 
+
+#def get_save_post():
+#    current_link = "https://www.supercasas.com/apartamentos-alquiler-zona-universitaria/1300903/"
+#    get_post_info(current_link)
+    #l = get_txt_file('last_pagination_supercasas.txt')
+    #save_posts(get_first_line_csv_on_queue('onqueue_supercasas.csv'))
+    #set_txt_file('last_pagination_supercasas.txt', str(int(l[0]) + 1))
+
+def get_save_post():
+    current_link = get_first_line_csv_on_queue("on_queue_supercasas.csv")
+    if(current_link is not None):
+        remove_first_csv_line("on_queue_supercasas.csv")
+        get_post_info(current_link)
+    time.sleep(5 * 60)
+
 if __name__ == '__main__':
-    while(pagination_exits):
-        l = get_txt_file('last_pagination_supercasas.txt')
-        get_posts_on_queue(starting_point_link + str(int(l[0])))
-        set_txt_file('last_pagination_supercasas.txt', str(int(l[0]) + 1))
-        save_posts()
-        on_queue = []
+    while (True):
+        get_save_post()
+
+#if __name__ == '__main__':
+#    while(pagination_exits):
+#        l = get_txt_file('supercasas\last_pagination_supercasas.txt')
+#        get_posts_on_queue(starting_point_link + str(int(l[0])))
+#        set_txt_file('supercasas\last_pagination_supercasas.txt', str(int(l[0]) + 1))
+
+    #current_link = get_first_line_csv_on_queue("supercasas\on_queue_supercasas.csv")
+    #if(current_link is not None):
+    #    remove_first_csv_line("supercasas\on_queue_supercasas.csv")
+    #    get_post_info(current_link)
+
+    ###get_post_info("https://www.supercasas.com/apartamentos-venta-y-alquiler-piantini/1289474/")
     #save_posts()
     #l = "https://www.supercasas.com/buscar/?do=1&PriceType=401&PriceFrom=0&PriceTo=200000&PagingPageSkip=18"
     #next_in_pagintation(l)

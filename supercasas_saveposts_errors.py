@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 from  requests_html import HTMLSession
 import pymongo
-#import manage_server_block
+import manage_server_block
 import csv
 
 on_queue = []
@@ -37,16 +37,13 @@ days_in_months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 CAPITAL_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 s = HTMLSession()
-starting_point_link = "https://www.supercasas.com/buscar/?do=1&ObjectType=123&PriceType=401&PriceFrom=0.00&PriceTo=200000.00&PagingPageSkip="
-####starting_point_link = "https://www.supercasas.com/buscar/?do=1&PriceType=401&PriceFrom=0&PriceTo=200000&PagingPageSkip="
-#COROTOS CRAWLER
+starting_point_link = "https://www.supercasas.com/buscar/?do=1&PriceType=401&PriceFrom=0&PriceTo=200000&PagingPageSkip="
 #parsing functions
 link_1 = "https://www.supercasas.com/apartamentos-alquiler-piantini/1295764/"#good to crawl
 link_2 = "https://www.supercasas.com/villas-alquiler-metro-country-club/1299217/"#good to crawl
-link_3 = "https://www.supercasas.com/villas-alquiler-casa-de-campo/1263608/" #not to be save to bd, price by day, not month
+link_3 = "https://www.supercasas.com/villas-alquiler-casa-de-campo/1263608/" #not to be saved to bd, price by day, not month
 
 AMENITIES_FILE = "amenities.csv"
-
 
 #===========================================================================================================================
 
@@ -91,10 +88,15 @@ def get_general_data_and_amenities_supercasas(data_str, amenities_str):
     data_str = data_str[data_str.index("Año Construcción:\n") + 18:]
     construction_year = data_str[:data_str.find("\n")]
 
-    amenities_str = amenities_str[amenities_str.index("Comodidades:\n") + 13:]
-    amenities_str = amenities_str[1:amenities_str.index("\n\n\n")]
-    amenities, amount_amenities = get_amenities_supercasas(amenities_str)
-    return location, sector, province, condition, current_use, square_footage, floor, elevator, buildable, construction_year, amenities, amount_amenities
+    amenities_description = ""
+    try:
+        amenities_description = amenities_str[amenities_str.index("Comodidades:\n") + 13:]
+        #amenities_description = amenities_str_list[1:amenities_str_list.index("\n\n\n")]
+    except:
+        amenities_description = amenities_str[amenities_str.index("Observaciones:\n")+15:]
+        #amenities_description = amenities_paragraph[1:amenities_paragraph.index("\n\n\n")]
+    #amenities, amount_amenities = get_amenities_supercasas(amenities_str_list)
+    return location, sector, province, condition, current_use, square_footage, floor, elevator, buildable, construction_year, amenities_description#amenities, amount_amenities
 
 def get_amenities_supercasas(amenities_str):
     result = ""
@@ -141,7 +143,7 @@ def save_to_csv_file_amenities(data_array):
     for line in data_array:
         with open(AMENITIES_FILE, 'a', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(line)
+            writer.writerow([line])
 
 def get_csv_to_array_amenities():
     with open(AMENITIES_FILE) as f:
@@ -149,31 +151,14 @@ def get_csv_to_array_amenities():
         lst = list(reader)
     return [item for sublist in lst for item in sublist]
 
+
+
 def get_post_info(link):
     try:
-        save_to_csv_file([link], "crawled_links_supercasas.csv")
+        #save_to_csv_file([link], "crawled_links_supercasas.csv")
         #user_agent = manage_server_block.get_user_agent()
         req = requests.get(link, headers={'User-Agent': 'Mozilla/5.0'})# 'Mozilla/5.0'
         soup = BeautifulSoup(req.content, 'html.parser')
-
-        price_crawled = ""
-        price = ""
-        post_title = ""
-        rooms = ""
-        bathrooms = ""
-        location = ""
-        sector = ""
-        province = ""
-        condition = ""
-        current_use = ""
-        square_footage = ""
-        floor = ""
-        elevator = ""
-        buildable = ""
-        construction_year = ""
-        amenities = ""
-        amount_amenities = ""
-        image_link = ""
 
         price_crawled_parent  = soup.find("div", {"class": "detail-ad-info-specs-block main-info"})
         price_crawled_narrow = [item for item in price_crawled_parent.find_all("div")]
@@ -193,52 +178,32 @@ def get_post_info(link):
         post_title = str(post_title_parent.find("h2"))
         post_title = post_title[post_title.index("Alquiler, ") + 10:post_title.index("</h2>")] 
 
-        general_data_and_amenities = [item.text for item in soup.find_all("div", {"class": "detail-ad-info-specs-block"})]
-        location, sector, province, condition, current_use, square_footage, floor, elevator, buildable, construction_year, amenities, amount_amenities = get_general_data_and_amenities_supercasas(general_data_and_amenities[4], general_data_and_amenities[5])
+        general_data_and_amenities = [item.text for item in soup.find_all("div", {"class": "detail-ad-info-specs-block"})]#amenities, amount_amenities
+        location, sector, province, condition, current_use, square_footage, floor, elevator, buildable, construction_year, amenities_observaciones = get_general_data_and_amenities_supercasas(general_data_and_amenities[4], general_data_and_amenities[6])
         
         rooms_parent = soup.find("div", {"class": "detail-ad-info-specs-block secondary-info"})
         rooms_and_bathrooms = [item.string for item in rooms_parent.find_all("span")]
         rooms, bathrooms = get_rooms_and_bathrooms_supercasas(rooms_and_bathrooms)
 
-        r = s.get(link)
-        r.html.render(sleep=1)
-        image_link = "h"
-        listings = r.html.xpath('//*[@id="detail-ad-info-specs"]', first=True)
-        for l in listings.absolute_links:
-            if ("/img.supercasas.com/" in str(l)):
-                image_link = str(l)
-                break
-        
+        #r = s.get(link)
+        #r.html.render(sleep=1)
+        image_link = ""
+        #listings = r.html.xpath('//*[@id="detail-ad-info-specs"]', first=True)
+        #for l in listings.absolute_links:
+        #    if ("/img.supercasas.com/" in str(l)):
+        #        image_link = str(l)
+        #        break
+
         details_array = ["supercasas",link,price_crawled,price,post_title,rooms,
         bathrooms,location,sector,province,condition,current_use,square_footage,floor,
-        elevator,buildable,construction_year,amenities,amount_amenities, image_link]
-        save_to_csv_file(details_array, "my_database_SUPERCASAS.csv")
+        elevator,buildable,construction_year,amenities_observaciones,0,image_link]
 
-        details = {
-            "website": "supercasas", 
-            "link": link,
-            "price_crawled": price_crawled,
-            "price_DOP": price,
-            "title": post_title,
-            "rooms": rooms,
-            "bathrooms": bathrooms,
-            "location_crawled":location, 
-            "sector": sector, 
-            "province": province, 
-            "condition": condition, 
-            "current_use": current_use, 
-            "square_footage": square_footage, 
-            "floor": floor, 
-            "elevator": elevator, 
-            "buildable": buildable, 
-            "construction_year": construction_year, 
-            "amenities": amenities, 
-            "amount_amenities": amount_amenities,
-            "image_link": image_link
-        }
+        
+        save_to_csv_file(details_array, "my_database_SUPERCASAS.csv")
         #info.insert_many(details)
         save_to_csv_file([link], "saved_posts_supercasas.csv")        
     except:
+    #    return
         save_to_csv_file([link], "error_supercasas.csv") 
 
 def get_posts_on_queue(link):
@@ -254,6 +219,7 @@ def get_posts_on_queue(link):
     listings = r.html.xpath('//*[@id="bigsearch-results-inner-container"]', first=True)
     for post in listings.links:
         if str(post) not in on_queue and post not in crawled and "/buscar/" not in str(post) and "locales" not in str(post):
+            save_to_csv_file([str(post)], "on_queue_supercasas.csv") 
             on_queue.append("https://www.supercasas.com" + str(post))    
     save_to_csv_file(on_queue, "crawled_links_supercasas.csv")
 
@@ -277,13 +243,54 @@ def save_posts():
         get_post_info(link)
         time.sleep(10 * 60)
 
+def get_first_line_csv_on_queue(file):
+    with open(file, newline='') as f:
+        reader = csv.reader(f)
+        return next(reader)[0]
+
+def remove_first_csv_line(file):
+    try:
+        with open(file, 'r+') as fp:
+                lines = fp.readlines()
+                if len(lines) > 0:
+                    fp.seek(0)
+                    fp.truncate()
+                    fp.writelines(lines[1:])                    
+    except:
+        return 
+    
+def get_save_posts_errors():
+    current_link = get_first_line_csv_on_queue("error_supercasas.csv")
+    if(current_link is not None):
+        remove_first_csv_line("error_supercasas.csv")
+        get_post_info(current_link)
+
+def get_save_post():
+    current_link = get_first_line_csv_on_queue("error_supercasas.csv")
+    if(current_link is not None):
+        remove_first_csv_line("error_supercasas.csv")
+        get_post_info(current_link)
+    time.sleep(1 * 60)
+    
+
 if __name__ == '__main__':
-    while(pagination_exits):
-        l = get_txt_file('last_pagination_supercasas.txt')
-        get_posts_on_queue(starting_point_link + str(int(l[0])))
-        set_txt_file('last_pagination_supercasas.txt', str(int(l[0]) + 1))
-        save_posts()
-        on_queue = []
+    while (True):
+        get_save_post()
+
+#['supercasas', 'https://www.supercasas.com/apartamentos-alquiler-los-cacicazgos/1292223/', 'US$ 1,300/Mes', 73779.03, 'Los Cacicazgos', 1.0, 1.5, 'Los Cacicazgos, Santo Domingo Centro (D.N.), Santo Domingo', 'Santo Domingo Centro (D.N.)', 'Santo Domingo', 'Segundo Uso', 'Residencial', 
+#'89', '3', '1', 'No', 'N/D', 'Este apt.es precioso, nuevo a estrenar, se alquila con línea blanca en US$1,500.00 y vacío en US$1,300.00 para mayor información comunicarse con Elisa Reynoso al (809) 440-6527\r\n\r\ntiene areas sociales espectaculares, un gran lobby, un gran salon de actividades con baños, area de piscina con terraza con baños, sauna con sus baños, area de juego para niños, gym.\n', 0, '']
+
+#if __name__ == '__main__':
+    #new = "https://www.supercasas.com/apartamentos-alquiler-los-cacicazgos/1292223/"
+    #get_post_info(new)
+    #while(pagination_exits):
+    #    l = get_txt_file('last_pagination_supercasas.txt')
+    #    get_posts_on_queue(starting_point_link + str(int(l[0])))
+    #    set_txt_file('last_pagination_supercasas.txt', str(int(l[0]) + 1))
+    #    current_link = get_first_line_csv_on_queue("error_supercasas.csv")
+    #    if(current_link is not None):
+    #        remove_first_csv_line("error_supercasas.csv")
+    #        get_post_info(current_link)
     #save_posts()
     #l = "https://www.supercasas.com/buscar/?do=1&PriceType=401&PriceFrom=0&PriceTo=200000&PagingPageSkip=18"
     #next_in_pagintation(l)
