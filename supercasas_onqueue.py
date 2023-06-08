@@ -36,7 +36,9 @@ days_in_months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 CAPITAL_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 s = HTMLSession()
-starting_point_link = "https://www.supercasas.com/buscar/?do=1&ObjectType=123&PriceType=403&PriceFrom=0.00&PriceTo=200000.00&PagingPageSkip="
+starting_point_link = "https://www.supercasas.com/buscar/?do=1&ObjectType=123&PriceType=401&PriceFrom=0.00&PriceTo=200000.00"
+#starting_point_link = "https://www.supercasas.com/buscar/?ObjectType=123&PriceType=400&PagingPageSkip="
+#starting_point_link = "https://www.supercasas.com/buscar/?do=1&ObjectType=123&PriceType=403&PriceFrom=0.00&PriceTo=200000.00&PagingPageSkip="
 #starting_point_link = "https://www.supercasas.com/buscar/?do=1&ObjectType=123&PriceType=401&PriceFrom=0.00&PriceTo=200000.00&PagingPageSkip="
 #starting_point_link = "https://www.supercasas.com/buscar/?do=1&PriceType=401&PriceFrom=0&PriceTo=200000&PagingPageSkip="
 #parsing functions

@@ -33,22 +33,22 @@ x = df.drop(columns='price')
 #======================================
 
 #print(df.corr()['price'])
-x_train, x_test, y_train, y_test = train_test_split(x,y,test_size=0.40,random_state=0)
+x_train, x_test, y_train, y_test = train_test_split(x,y,test_size=0.90,random_state=0)
 lr = LinearRegression()
 lr.fit(x_train, y_train)
-c = lr.intercept_
-print("c: " + str(c))
-m = lr.coef_
-print("m: " + str(m))
+#c = lr.intercept_
+#print("c: " + str(c))
+#m = lr.coef_
+#print("m: " + str(m))
 y_pred_train = lr.predict(x_train)
 #print("y_pred_train: " + str(y_pred_train))
 #plt.scatter(y_train, y_pred_train)
 #plt.xlabel("E - Precios Reales")
 #plt.ylabel("E - Precios Previstos")
-clf = svm.SVC(kernel='linear', C=0.01).fit(x_train, y_train)
-clf.score(x_test, y_test)
-clf = svm.SVC(kernel='linear', C=0.01, random_state=42)
-scores = cross_val_score(clf, x, y, cv=5)
+#clf = svm.SVC(kernel='linear', C=0.01).fit(x_train, y_train)
+#clf.score(x_test, y_test)
+#clf = svm.SVC(kernel='linear', C=0.01, random_state=42)
+#scores = cross_val_score(clf, x, y, cv=5)
 print("accuracy: "+ str(r2_score(y_train, y_pred_train)))
 #plt.show()
 ###y_pred_test = lr.predict(x_test)

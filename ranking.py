@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from  requests_html import HTMLSession
+from sklearn.impute import SimpleImputer
 
 provinces_names = ["Azua", "Bahoruco", "Barahona", "Dajabon", "Duarte", "El-Seibo", 
              "Elias-Pina", "Espaillat", "Hato-Mayor", "Hermanas-Mirabal",
@@ -68,7 +69,21 @@ def get_amount_reviews(province_start_link):
 
 example = "something 5 reviews"
 
+import pandas as pd
+import numpy as np
 
+
+df = pd.read_csv('ranking_provincias.csv')
+# Generate random missing values on column MaxSpeed
+mask = np.random.choice([True, False], size=df['PrecioBase'].shape, p=[0.1, 0.9])
+mask[mask.all(),-1] = 0
+df['PrecioBase'] = df['PrecioBase'].mask(mask)
+
+# Mean Imputation
+df_mean = df.copy()
+mean_imputer = SimpleImputer(strategy='mean')
+df_mean['PrecioBase'] = mean_imputer.fit_transform(df_mean['PrecioBase'].values.reshape(-1,1))
 #reviews class t5eq1io r4a59j5 dir dir-ltr
 #next page class l1j9v1wn c1ytbx3a dir dir-ltr
+
 
