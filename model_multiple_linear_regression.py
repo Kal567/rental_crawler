@@ -14,11 +14,14 @@ from sklearn.linear_model import LinearRegression
 
 import pickle as pkl
 
+from sklearn.impute import SimpleImputer
+
 #%matplotlib inline
-df=pd.read_csv('cleaned_data.csv')
+df=pd.read_csv('SD_supercasas_corotos_CLEAN.csv')#cleaned_data
 df.head()
 #df['province'] = df['province'].astype('category')
 #df['province'] = df['province'].cat.codes
+
 y = df['price']
 x = df.drop(columns='price')
 
@@ -33,9 +36,11 @@ x = df.drop(columns='price')
 #======================================
 
 #print(df.corr()['price'])
-x_train, x_test, y_train, y_test = train_test_split(x,y,test_size=0.90,random_state=0)
+x_train, x_test, y_train, y_test = train_test_split(x,y,test_size=0.40,random_state=0)
 lr = LinearRegression()
 lr.fit(x_train, y_train)
+
+
 #c = lr.intercept_
 #print("c: " + str(c))
 #m = lr.coef_
@@ -59,6 +64,8 @@ print("accuracy: "+ str(r2_score(y_train, y_pred_train)))
 #plt.show()
 #89166.0,
 
+#imp = SimpleImputer(missing_values=np.nan, strategy='mean')
+#imp.fit([[1, 2], [np.nan, 3], [7, 6]])
 
 
 #filenm = 'LR_model.pickle'
